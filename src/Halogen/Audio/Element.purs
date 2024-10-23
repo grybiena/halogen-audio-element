@@ -9,8 +9,8 @@ import Data.Traversable (traverse, traverse_)
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.Audio.Element.Event (AudioElementEvent, audioElementEvents)
-import Halogen.HTML.CSS (style)
 import Halogen.HTML as HH
+import Halogen.HTML.CSS (style)
 import Halogen.HTML.Properties as HP
 import Halogen.Subscription as HS
 import Web.Event.Event (EventType(..))
@@ -20,6 +20,7 @@ import Web.HTML.HTMLMediaElement (currentSrc, currentTime, duration, ended, mute
 
 data Query a =
     GetAudioElement (HTMLAudioElement -> a)
+  | Controls Boolean a
   | GetSrc (String -> a)
   | SetSrc String a
   | CurrentSrc (String -> a)
@@ -35,14 +36,11 @@ data Query a =
   | SetMuted Boolean a
   | Ended (Boolean -> a)
 
-type Input =
+type State =
   { controls :: Boolean 
   , source :: String 
   }
 
-type State =
-  { config :: Input
-  }
 
 data Action =
     Initialize
@@ -53,10 +51,10 @@ data Output =
   | AudioElement HTMLAudioElement 
 
 
-component :: forall m . MonadEffect m => H.Component Query Input Output m 
+component :: forall m . MonadEffect m => H.Component Query State Output m 
 component =
   H.mkComponent
-    { initialState: \config -> { config }
+    { initialState: identity 
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction
                                      , handleQuery = handleQuery
@@ -74,15 +72,16 @@ component =
             H.raise $ AudioElement el
         Bubble e -> H.raise $ AudioElementEvent e 
   
-    handleQuery :: forall s a.
+    handleQuery :: forall a.
                     MonadEffect m
-                 => Query a -> H.HalogenM s Action () Output m (Maybe a) 
+                 => Query a -> H.HalogenM State Action () Output m (Maybe a) 
     handleQuery q = do
       e <- H.getRef (H.RefLabel "audio")
       flip traverse (e >>= fromElement) $ \ae -> do
         let me = toHTMLMediaElement ae 
         case q of
           GetAudioElement f -> pure $ f ae
+          Controls b a -> H.modify_ (\st -> st { controls = b }) *> pure a 
           GetSrc f -> H.liftEffect $ f <$> src me 
           SetSrc src a -> H.liftEffect $ const a <$> setSrc src me
           CurrentSrc f -> H.liftEffect $ f <$> currentSrc me 
@@ -108,9 +107,9 @@ component =
       void $ H.subscribe (Bubble <$> emitter)
     
     render :: State -> H.ComponentHTML Action () m 
-    render { config } = 
-      HH.audio [ HP.controls config.controls 
-               , HP.src config.source 
+    render { controls, source } = 
+      HH.audio [ HP.controls controls 
+               , HP.src source 
                , HP.ref (H.RefLabel "audio")
                , style do
                    width (pct 100.0)
