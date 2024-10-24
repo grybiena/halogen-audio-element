@@ -8,7 +8,7 @@ import Data.String (toLower)
 import Data.Traversable (traverse, traverse_)
 import Effect.Class (class MonadEffect)
 import Halogen as H
-import Halogen.Audio.Element.Event (AudioElementEvent, audioElementEvents)
+import Halogen.Audio.Element.Event (AudioElementEvent, everything)
 import Halogen.HTML as HH
 import Halogen.HTML.CSS (style)
 import Halogen.HTML.Properties as HP
@@ -68,7 +68,7 @@ component =
         Initialize -> do
           e <- H.getRef (H.RefLabel "audio")
           flip traverse_ (e >>= fromElement) $ \el -> do
-            traverse_ (subscribeToEvent el) audioElementEvents 
+            traverse_ (subscribeToEvent el) (everything :: Array AudioElementEvent) 
             H.raise $ AudioElement el
         Bubble e -> H.raise $ AudioElementEvent e 
   

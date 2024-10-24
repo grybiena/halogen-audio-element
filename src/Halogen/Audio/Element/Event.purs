@@ -10,7 +10,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
-import Data.Unfoldable (unfoldr)
+import Data.Unfoldable (class Unfoldable, unfoldr1)
 
 
 data AudioElementEvent =
@@ -56,6 +56,7 @@ instance Enum AudioElementEvent where
   succ = genericSucc
   pred = genericPred
 
-audioElementEvents :: forall e . Enum e => Bounded e => Array e
-audioElementEvents = unfoldr (\a -> Tuple a <$> succ a) bottom 
+everything :: forall t a. Enum a => Bounded a => Unfoldable t => t a 
+everything = (unfoldr1 (\a -> Tuple a (succ a)) bottom) 
+
 

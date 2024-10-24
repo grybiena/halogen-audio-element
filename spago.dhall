@@ -21,6 +21,8 @@ to generate this file without the comments in this block.
   , "halogen-subscriptions"
   , "maybe"
   , "prelude"
+  , "spec"
+  , "spec-node"
   , "strings"
   , "tuples"
   , "unfoldable"
@@ -28,5 +30,5 @@ to generate this file without the comments in this block.
   , "web-html"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs" ]
+, sources = [ "src/**/*.purs", "test/**/*.purs" ]
 }
